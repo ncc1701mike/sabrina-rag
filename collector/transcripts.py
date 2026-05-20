@@ -1,4 +1,17 @@
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+from youtube_transcript_api.proxies import GenericProxyConfig
+import os
+
+COOKIES_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "cookies.txt"
+)
+
+def get_api():
+    """Return a YouTubeTranscriptApi instance, with cookies if available."""
+    if os.path.exists(COOKIES_PATH):
+        return YouTubeTranscriptApi(cookie_path=COOKIES_PATH)
+    return YouTubeTranscriptApi()
 
 def fetch_transcript(video_id: str) -> tuple[str, str]:
     """
@@ -7,15 +20,14 @@ def fetch_transcript(video_id: str) -> tuple[str, str]:
     Prioritizes manual transcripts over auto-generated.
     """
     try:
-        ytt = YouTubeTranscriptApi()
-        transcript_list = ytt.list(video_id)
+        api = get_api()
+        transcript_list = api.list(video_id)
 
         # Try manual first
         try:
             transcript = transcript_list.find_manually_created_transcript(['en'])
             source = 'manual'
         except Exception:
-            # Fall back to auto-generated
             transcript = transcript_list.find_generated_transcript(['en'])
             source = 'auto'
 
