@@ -7,7 +7,8 @@ def fetch_transcript(video_id: str) -> tuple[str, str]:
     Prioritizes manual transcripts over auto-generated.
     """
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        ytt = YouTubeTranscriptApi()
+        transcript_list = ytt.list(video_id)
 
         # Try manual first
         try:
@@ -20,7 +21,7 @@ def fetch_transcript(video_id: str) -> tuple[str, str]:
 
         entries = transcript.fetch()
         full_text = " ".join(
-            entry.get("text", "").strip()
+            entry.text.strip()
             for entry in entries
         ).strip()
 
