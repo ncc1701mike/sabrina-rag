@@ -4,3 +4,4 @@ supabase
 python-dotenv
 tqdm
 google-api-python-client
+mlx-whisper
