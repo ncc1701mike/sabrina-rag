@@ -1,0 +1,6 @@
+yt-dlp
+youtube-transcript-api
+supabase
+python-dotenv
+tqdm
+google-api-python-client
