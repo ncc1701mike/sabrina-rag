@@ -7,6 +7,7 @@ Fetches all video transcripts from @sabrina_ramonov and stores in Supabase.
 """
 
 import time
+import random
 from datetime import datetime
 from tqdm import tqdm
 from collector.channel import get_channel_id, get_all_video_ids, get_video_details
@@ -14,7 +15,8 @@ from collector.transcripts import fetch_transcript
 from collector.storage import upsert_transcript, get_existing_video_ids
 
 CHANNEL_HANDLE = "@sabrina_ramonov"
-DELAY_SECONDS  = 1.0   # polite delay between transcript requests
+DELAY_SECONDS = 5.0  # base delay — keeps us well under YouTube's rate limit
+JITTER        = 1.5  # ± random seconds added to each delay
 
 def run():
     print("=" * 60)
@@ -88,7 +90,7 @@ def run():
         else:
             failed += 1
 
-        time.sleep(DELAY_SECONDS)
+        time.sleep(DELAY_SECONDS + random.uniform(-JITTER, JITTER))
 
     # Summary
     print("\n" + "=" * 60)

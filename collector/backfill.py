@@ -5,6 +5,7 @@ Runs only on missing transcripts — safe to run multiple times.
 """
 
 import time
+import random
 from datetime import datetime
 from tqdm import tqdm
 from dotenv import load_dotenv
@@ -14,7 +15,8 @@ load_dotenv()
 from collector.transcripts import fetch_transcript
 from collector.storage import get_supabase
 
-DELAY_SECONDS = 0.5
+DELAY_SECONDS = 5.0  # base delay — keeps us well under YouTube's rate limit
+JITTER        = 1.5  # ± random seconds added to each delay
 
 def run_backfill():
     sb = get_supabase()
@@ -57,7 +59,7 @@ def run_backfill():
             print(f"  Update failed for {video_id}: {e}")
             failed += 1
 
-        time.sleep(DELAY_SECONDS)
+        time.sleep(DELAY_SECONDS + random.uniform(-JITTER, JITTER))
 
     print("\n" + "=" * 60)
     print("Backfill complete.")
