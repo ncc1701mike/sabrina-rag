@@ -1,5 +1,6 @@
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
-from youtube_transcript_api.proxies import GenericProxyConfig
+import requests
+from http.cookiejar import MozillaCookieJar
 import os
 
 COOKIES_PATH = os.path.join(
@@ -10,7 +11,11 @@ COOKIES_PATH = os.path.join(
 def get_api():
     """Return a YouTubeTranscriptApi instance, with cookies if available."""
     if os.path.exists(COOKIES_PATH):
-        return YouTubeTranscriptApi(cookie_path=COOKIES_PATH)
+        session = requests.Session()
+        cj = MozillaCookieJar()
+        cj.load(COOKIES_PATH, ignore_discard=True, ignore_expires=True)
+        session.cookies = cj
+        return YouTubeTranscriptApi(http_client=session)
     return YouTubeTranscriptApi()
 
 def fetch_transcript(video_id: str) -> tuple[str, str]:
