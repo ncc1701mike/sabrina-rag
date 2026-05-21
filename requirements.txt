@@ -5,3 +5,9 @@ python-dotenv
 tqdm
 google-api-python-client
 mlx-whisper
+anthropic
+openai
+tiktoken
+langchain-openai
+langchain-community
+langchain-core
