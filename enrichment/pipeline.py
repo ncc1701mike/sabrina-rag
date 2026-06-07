@@ -90,6 +90,65 @@ def run_pipeline(limit: int = None, dry_run: bool = False):
                 "target_audience": enrichment.get("target_audience", ""),
             }).eq("video_id", video_id).execute()
 
+            # 2b. Write structured enrichment to video_enrichments table
+            # Map enricher output to Supabase schema
+            # Enricher returns: topics, key_insights, content_type, target_audience
+            # Schema expects: topic_tags, key_claims, actionable_tactics,
+            #                 platforms_mentioned, content_type, strategic_value_score, summary
+
+            # Normalize content_type to allowed values
+            raw_type = enrichment.get("content_type", "other").lower()
+            type_map = {
+                "tutorial":    "tutorial",
+                "strategy":    "strategy",
+                "case_study":  "case_study",
+                "case study":  "case_study",
+                "tool_review": "tool_review",
+                "tool review": "tool_review",
+                "mindset":     "mindset",
+                "opinion":     "mindset",
+                "interview":   "other",
+                "news":        "other",
+                "vlog":        "other",
+            }
+            content_type = type_map.get(raw_type, "other")
+
+            # Extract platform mentions from topics
+            topic_list = enrichment.get("topics", [])
+            platform_keywords = ["tiktok", "instagram", "youtube", "linkedin",
+                                 "twitter", "pinterest", "facebook"]
+            platforms = [p for p in platform_keywords
+                        if any(p in t.lower() for t in topic_list)]
+
+            # Use key_insights as both key_claims and actionable_tactics
+            insights = enrichment.get("key_insights", [])
+            key_claims = insights[:3]
+            tactics    = insights[3:] if len(insights) > 3 else insights
+
+            # Build summary from target_audience + first insight
+            audience = enrichment.get("target_audience", "")
+            first_insight = insights[0] if insights else ""
+            summary = f"{audience}. {first_insight}"[:500] if audience else first_insight[:500]
+
+            # Score based on topic relevance to social media automation
+            social_keywords = ["tiktok", "instagram", "social media", "content",
+                              "viral", "posting", "automation", "ai tool",
+                              "growth", "audience", "creator"]
+            score = sum(2 for kw in social_keywords
+                       if any(kw in t.lower() for t in topic_list + insights))
+            strategic_value_score = min(score, 10)
+
+            sb.table("video_enrichments").upsert({
+                "video_id":              video_id,
+                "topic_tags":            topic_list,
+                "key_claims":            key_claims,
+                "actionable_tactics":    tactics,
+                "platforms_mentioned":   platforms,
+                "content_type":          content_type,
+                "strategic_value_score": strategic_value_score,
+                "summary":               summary,
+            }).execute()
+
             # 3. Chunk
             chunks = chunk_text(transcript_text, video_id)
             for chunk in chunks:
