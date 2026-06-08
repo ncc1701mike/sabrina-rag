@@ -1,7 +1,7 @@
 import tiktoken
 
-CHUNK_SIZE = 400   # tokens per chunk
-OVERLAP    = 50    # token overlap between chunks
+CHUNK_SIZE = 200   # ~150 words per chunk — tighter semantic units
+OVERLAP    = 30    # ~22 words overlap
 
 
 def chunk_text(text: str, video_id: str) -> list[dict]:
